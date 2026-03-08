@@ -15,11 +15,11 @@ import (
 	"go.uber.org/fx"
 )
 
-func NewServer(lc fx.Lifecycle, config *config.Configuration, healthHandler *handler.HealthHandler) {
+func NewServer(lc fx.Lifecycle, config *config.Configuration, healthHandler *handler.HealthHandler, employeeHandler *handler.EmployeeHandler) {
 	r := gin.New()
 
 	InitRouter(r)
-	SetupRoutes(r, healthHandler)
+	SetupRoutes(r, healthHandler, employeeHandler)
 
 	server := &http.Server{
 		Addr:    ":" + config.Port,
@@ -35,8 +35,18 @@ func InitRouter(r *gin.Engine) {
 	r.Use(errors.ErrorHandler())
 }
 
-func SetupRoutes(r *gin.Engine, handler *handler.HealthHandler) {
-	r.GET("/health", handler.Health)
+func SetupRoutes(r *gin.Engine, healthHandler *handler.HealthHandler, employeeHandler *handler.EmployeeHandler) {
+	r.GET("/health", healthHandler.Health)
+
+	// Zaposleni rute
+	employees := r.Group("/employees")
+	{
+		employees.GET("", employeeHandler.ListEmployees)
+		employees.GET("/:id", employeeHandler.GetEmployee)
+		employees.POST("", employeeHandler.CreateEmployee)
+		employees.PUT("/:id", employeeHandler.UpdateEmployee)
+		employees.DELETE("/:id", employeeHandler.DeactivateEmployee)
+	}
 }
 
 func RegisterServerLifecycle(lc fx.Lifecycle, server *http.Server) {

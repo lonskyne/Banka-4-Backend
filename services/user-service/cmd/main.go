@@ -6,8 +6,10 @@ import (
 	"user-service/internal/config"
 	"user-service/internal/handler"
 	"user-service/internal/model"
+	"user-service/internal/repository" // ← DODAJ OVO
 	"user-service/internal/seed"
 	"user-service/internal/server"
+	"user-service/internal/service" // ← DODAJ OVO
 
 	"go.uber.org/fx"
 	"gorm.io/gorm"
@@ -21,6 +23,9 @@ func main() {
 				return db.New(cfg.DB.DSN())
 			},
 			handler.NewHealthHandler,
+			handler.NewEmployeeHandler,       // ← DODAJ OVO
+			service.NewEmployeeService,       // ← DODAJ OVO
+			repository.NewEmployeeRepository, // ← DODAJ OVO
 		),
 		fx.Invoke(func(cfg *config.Configuration) error {
 			return logging.Init(cfg.Env)
