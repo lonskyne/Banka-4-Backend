@@ -15,17 +15,19 @@ import (
 )
 
 type EmployeeService struct {
-	repo         repository.EmployeeRepository // <-- no pointer
-	tokenRepo    repository.ActivationTokenRepository
-	emailService *EmailService
+	repo           repository.EmployeeRepository // <-- no pointer
+	tokenRepo      repository.ActivationTokenRepository
+	resetTokenRepo repository.ResetTokenRepository
+	emailService   *EmailService
 }
 
 func NewEmployeeService(
-	repo repository.EmployeeRepository, tokenRepo repository.ActivationTokenRepository, emailService *EmailService) *EmployeeService {
+	repo repository.EmployeeRepository, tokenRepo repository.ActivationTokenRepository, resetTokenRepo repository.ResetTokenRepository, emailService *EmailService) *EmployeeService {
 	return &EmployeeService{
-		repo:         repo,
-		tokenRepo:    tokenRepo,
-		emailService: emailService,
+		repo:           repo,
+		tokenRepo:      tokenRepo,
+		resetTokenRepo: resetTokenRepo,
+		emailService:   emailService,
 	}
 }
 
@@ -191,4 +193,99 @@ func (s *EmployeeService) GetAllEmployees(ctx context.Context, query *dto.ListEm
 	}
 
 	return dto.ToEmployeeResponseList(employees, total, query.Page, query.PageSize), nil
+}
+
+func (s *EmployeeService) RequestPasswordReset(ctx context.Context, email string) error {
+	// Pronađi zaposlenog po emailu
+	employee, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return errors.InternalErr(err)
+	}
+	// Provera da li zaposleni postoji
+	if employee == nil {
+		return nil
+	}
+
+	// Obriši stari reset token ako postoji, zaposleni može imati samo jedan aktivan token
+	if err := s.resetTokenRepo.DeleteByEmployeeID(ctx, employee.EmployeeID); err != nil {
+		return errors.InternalErr(err)
+	}
+
+	// Generišemo kriptografski siguran hex token
+	tokenBytes := make([]byte, 16)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return errors.InternalErr(err)
+	}
+	token := hex.EncodeToString(tokenBytes)
+
+	// Čuvamo token u bazi sa rokom važenja od 15 minuta
+	resetToken := &model.ResetToken{
+		EmployeeID: employee.EmployeeID,
+		Token:      token,
+		ExpiresAt:  time.Now().Add(15 * time.Minute),
+	}
+
+	if err := s.resetTokenRepo.Create(ctx, resetToken); err != nil {
+		return errors.InternalErr(err)
+	}
+
+	// Šaljemo link sa tokenom na email
+	link := fmt.Sprintf("http://localhost:8080/reset-password?token=%s", token)
+	s.emailService.Send(
+		employee.Email,
+		"Password reset",
+		fmt.Sprintf("Kliknite ovde da resetujete lozinku: %s", link),
+	)
+
+	return nil
+}
+
+func (s *EmployeeService) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
+	// Pronađi token po kodu iz linka
+	resetToken, err := s.resetTokenRepo.FindByToken(ctx, token)
+	if err != nil {
+		return errors.InternalErr(err)
+	}
+	if resetToken == nil {
+		return errors.BadRequestErr("invalid or expired token")
+	}
+
+	// Provera da li je token istekao
+	if resetToken.ExpiresAt.Before(time.Now()) {
+		// Čistimo istekli token iz baze
+		_ = s.resetTokenRepo.DeleteByEmployeeID(ctx, resetToken.EmployeeID)
+		return errors.BadRequestErr("token has expired")
+	}
+
+	// Nađi zaposlenog preko EmployeeID iz tokena
+	employee, err := s.repo.FindByID(ctx, resetToken.EmployeeID)
+	if err != nil {
+		return errors.InternalErr(err)
+	}
+	if employee == nil {
+		return errors.NotFoundErr("employee not found")
+	}
+
+	// Hash nove lozinke
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.InternalErr(err)
+	}
+
+	employee.Password = string(hashedPassword)
+	if err := s.repo.Update(ctx, employee); err != nil {
+		return errors.InternalErr(err)
+	}
+
+	// Obriši token jer je iskorišćen, kod je jednokratan
+	_ = s.resetTokenRepo.DeleteByEmployeeID(ctx, employee.EmployeeID)
+
+	// Pošalji potvrdu na email
+	s.emailService.Send(
+		employee.Email,
+		"Password changed",
+		"Vaša lozinka je uspešno promenjena.",
+	)
+
+	return nil
 }
