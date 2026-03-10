@@ -18,15 +18,17 @@ type EmployeeService struct {
 	repo           repository.EmployeeRepository // <-- no pointer
 	tokenRepo      repository.ActivationTokenRepository
 	resetTokenRepo repository.ResetTokenRepository
+	positionRepo   repository.PositionRepository
 	emailService   *EmailService
 }
 
 func NewEmployeeService(
-	repo repository.EmployeeRepository, tokenRepo repository.ActivationTokenRepository, resetTokenRepo repository.ResetTokenRepository, emailService *EmailService) *EmployeeService {
+	repo repository.EmployeeRepository, tokenRepo repository.ActivationTokenRepository, resetTokenRepo repository.ResetTokenRepository, positionRepo repository.PositionRepository, emailService *EmailService) *EmployeeService {
 	return &EmployeeService{
 		repo:           repo,
 		tokenRepo:      tokenRepo,
 		resetTokenRepo: resetTokenRepo,
+		positionRepo:   positionRepo,
 		emailService:   emailService,
 	}
 }
@@ -164,6 +166,16 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, id uint, req *dto.
 		}
 		if existing != nil {
 			return nil, errors.ConflictErr("username already in use")
+		}
+	}
+
+	if req.PositionID != employee.PositionID {
+		exists, err := s.positionRepo.Exists(ctx, req.PositionID)
+		if err != nil {
+			return nil, errors.InternalErr(err)
+		}
+		if !exists {
+			return nil, errors.BadRequestErr("invalid position_id")
 		}
 	}
 
