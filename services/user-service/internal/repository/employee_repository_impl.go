@@ -52,6 +52,11 @@ func (r *employeeRepository) Update(ctx context.Context, employee *model.Employe
 func (r *employeeRepository) FindByID(ctx context.Context, id uint) (*model.Employee, error) {
 	var e model.Employee
 	result := r.db.WithContext(ctx).First(&e, id)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
 	if result.Error != nil {
 		return nil, result.Error
 	}

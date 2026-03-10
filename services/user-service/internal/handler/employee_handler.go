@@ -50,5 +50,5 @@ func (h *EmployeeHandler) Activate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Password set successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password set successfully"})
 }

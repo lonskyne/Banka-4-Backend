@@ -97,17 +97,20 @@ func (s *EmployeeService) ActivateAccount(ctx context.Context, tokenStr, passwor
 	// Pronađi token u bazi
 	activationToken, err := s.tokenRepo.FindByToken(ctx, tokenStr)
 	if err != nil || activationToken == nil {
-		return errors.ConflictErr("invalid or expired token")
+		return errors.BadRequestErr("invalid or expired token")
 	}
 
 	// Provera da li je token istekao
 	if activationToken.ExpiresAt.Before(time.Now()) {
-		return errors.ConflictErr("token expired")
+		return errors.BadRequestErr("token expired")
 	}
 
 	// Nađi zaposlenog preko EmployeeID iz tokena
 	employee, err := s.repo.FindByID(ctx, activationToken.EmployeeID)
-	if err != nil || employee == nil {
+	if err != nil {
+		return errors.InternalErr(err)
+	}
+	if employee == nil {
 		return errors.ConflictErr("employee not found")
 	}
 
