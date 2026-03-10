@@ -3,7 +3,6 @@ package validator
 import (
 	"unicode"
 
-	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -28,8 +27,3 @@ func validatePassword(fl validator.FieldLevel) bool {
 	return upper >= 1 && lower >= 1 && digits >= 2
 }
 
-func RegisterValidators() {
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("password", validatePassword)
-	}
-}
