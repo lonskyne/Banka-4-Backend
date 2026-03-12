@@ -350,6 +350,54 @@ func (s *EmployeeService) Login(ctx context.Context, req *dto.LoginRequest) (*dt
 		return nil, errors.InternalErr(err)
 	}
 
+	//Generisanje refresh tokena
+	refreshToken, err := jwt.GenerateRefreshToken(employee.EmployeeID, s.cfg.RefreshSecret, s.cfg.RefreshExpiry)
+	if err != nil {
+		return nil, errors.InternalErr(err)
+	}
+
 	//Vrati generisani token
-	return &dto.LoginResponse{Token: token}, nil
+	return &dto.LoginResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+// dodata funkcija za rotaciju tokena, kad se refresh token iskoristi vraca se novi refresh jer ce stari isteci pre roka (vec je akttivan timer za taj token)
+func (s *EmployeeService) RefreshToken(ctx context.Context, refreshTokenStr string) (*dto.LoginResponse, error) {
+	// validacija refresh tokena sa refresh secret
+	verifier := jwt.NewJWTVerifier(s.cfg.RefreshSecret)
+	claims, err := verifier.VerifyToken(refreshTokenStr)
+	if err != nil {
+		return nil, errors.UnauthorizedErr("invalid or expired refresh token")
+	}
+
+	// validacija da zaposleni postoji i je aktivan
+	employee, err := s.repo.FindByID(ctx, claims.UserID)
+	if err != nil {
+		return nil, errors.InternalErr(err)
+	}
+	if employee == nil {
+		return nil, errors.UnauthorizedErr("user not found")
+	}
+	if !employee.Active {
+		return nil, errors.ForbiddenErr("account is disabled")
+	}
+
+	// novi access token
+	newAccessToken, err := jwt.GenerateToken(employee.EmployeeID, s.cfg.JWTSecret, s.cfg.JWTExpiry)
+	if err != nil {
+		return nil, errors.InternalErr(err)
+	}
+
+	// novi refresh token (token rotation)
+	newRefreshToken, err := jwt.GenerateRefreshToken(employee.EmployeeID, s.cfg.RefreshSecret, s.cfg.RefreshExpiry)
+	if err != nil {
+		return nil, errors.InternalErr(err)
+	}
+
+	return &dto.LoginResponse{
+		Token:        newAccessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
 }

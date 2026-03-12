@@ -42,6 +42,7 @@ func SetupRoutes(r *gin.Engine, healthHandler *handler.HealthHandler, empHandler
 	r.POST("/register", empHandler.Register)
 	r.POST("/login", empHandler.Login)
 	r.POST("/activate", empHandler.Activate)
+	r.POST("/refresh", empHandler.RefreshToken)
 	r.GET("/employees", empHandler.ListEmployees)
 	r.PATCH("/employees/:id", empHandler.UpdateEmployee)
 	r.POST("/forgot-password", empHandler.ForgotPassword)

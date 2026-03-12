@@ -22,12 +22,14 @@ func (c *DBConfig) DSN() string {
 }
 
 type Configuration struct {
-	Env       string
-	Port      string
-	DB        DBConfig
-	GrpcPort  string // unused for now until we add multiple microservices
-	JWTSecret string // Dodato za JWT
-	JWTExpiry int    // U minutima
+	Env           string
+	Port          string
+	DB            DBConfig
+	GrpcPort      string // unused for now until we add multiple microservices
+	JWTSecret     string // Dodato za JWT
+	JWTExpiry     int    // U minutima
+	RefreshSecret string // Dodato za Refresh
+	RefreshExpiry int    // Refresh u minutima
 }
 
 func GetOrDefault(env string, defaultValue string) string {
@@ -52,6 +54,9 @@ func Load() *Configuration {
 
 	expiryStr := GetOrDefault("JWT_EXPIRY_HOURS", "24")
 	expiry, _ := strconv.Atoi(expiryStr)
+	refreshExpiryStr := GetOrDefault("REFRESH_EXPIRY_MINUTES", "10080") // 7 dana
+	refreshExpiry, _ := strconv.Atoi(refreshExpiryStr)
+
 	return &Configuration{
 		Env:  GetOrDefault("ENV", "development"),
 		Port: GetOrDefault("PORT", "8080"),
@@ -62,7 +67,9 @@ func Load() *Configuration {
 			Password: GetOrThrow("DB_PASS"),
 			DBName:   GetOrThrow("DB_NAME"),
 		},
-		JWTSecret: GetOrThrow("JWT_SECRET"),
-		JWTExpiry: expiry,
+		JWTSecret:     GetOrThrow("JWT_SECRET"),
+		JWTExpiry:     expiry,
+		RefreshSecret: GetOrThrow("REFRESH_SECRET"),
+		RefreshExpiry: refreshExpiry,
 	}
 }
