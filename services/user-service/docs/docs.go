@@ -359,6 +359,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/errors.AppError"
                         }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/errors.AppError"
+                        }
                     }
                 }
             }

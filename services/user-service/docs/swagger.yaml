@@ -490,6 +490,10 @@ paths:
           description: Conflict
           schema:
             $ref: '#/definitions/errors.AppError'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/errors.AppError'
       summary: Register a new client
       tags:
       - clients
