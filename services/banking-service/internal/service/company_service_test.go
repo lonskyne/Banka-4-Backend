@@ -17,8 +17,12 @@ import (
 // ── Fakes ─────────────────────────────────────────────────────────────────────
 
 type fakeCompanyRepo struct {
-	exists    bool
-	existsErr error
+	workCodeExists    bool
+	workCodeExistsErr error
+	taxNumExists    bool
+	taxNumExistsErr error
+	regNumExists    bool
+	regNumExistsErr error
 	createErr error
 }
 
@@ -27,15 +31,15 @@ func (r *fakeCompanyRepo) Create(_ context.Context, _ *model.Company) error {
 }
 
 func (r *fakeCompanyRepo) RegistrationNumberExists(_ context.Context, _ string) (bool, error) {
-	return r.exists, r.existsErr
+	return r.regNumExists, r.regNumExistsErr
 }
 
 func (r *fakeCompanyRepo) TaxNumberExists(_ context.Context, _ string) (bool, error) {
-	return r.exists, r.existsErr
+	return r.taxNumExists, r.taxNumExistsErr
 }
 
 func (r *fakeCompanyRepo) WorkCodeExists(_ context.Context, _ uint) (bool, error) {
-	return r.exists, r.existsErr
+	return r.workCodeExists, r.workCodeExistsErr
 }
 
 type fakeUserClient struct {
@@ -112,7 +116,7 @@ func TestCreateCompany(t *testing.T) {
 	}{
 		{
 			name: "success",
-			repo: &fakeCompanyRepo{},
+			repo: &fakeCompanyRepo{workCodeExists: true},
 			uc:   &fakeUserClient{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT count\(\*\) FROM "work_codes"`).
@@ -126,7 +130,7 @@ func TestCreateCompany(t *testing.T) {
 		},
 		{
 			name:      "owner not found",
-			repo:      &fakeCompanyRepo{},
+			repo:      &fakeCompanyRepo{workCodeExists: true},
 			uc:        &fakeUserClient{clientErr: fmt.Errorf("not found")},
 			setupMock: func(mock sqlmock.Sqlmock) {},
 			req:       validCompanyReq(),
@@ -158,7 +162,7 @@ func TestCreateCompany(t *testing.T) {
 		},
 		{
 			name: "registration number already exists",
-			repo: &fakeCompanyRepo{},
+			repo: &fakeCompanyRepo{workCodeExists: true, regNumExists: true},
 			uc:   &fakeUserClient{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT count\(\*\) FROM "work_codes"`).
@@ -172,7 +176,7 @@ func TestCreateCompany(t *testing.T) {
 		},
 		{
 			name: "registration number db error",
-			repo: &fakeCompanyRepo{},
+			repo: &fakeCompanyRepo{regNumExists: true},
 			uc:   &fakeUserClient{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT count\(\*\) FROM "work_codes"`).
@@ -185,7 +189,7 @@ func TestCreateCompany(t *testing.T) {
 		},
 		{
 			name: "tax number already exists",
-			repo: &fakeCompanyRepo{},
+			repo: &fakeCompanyRepo{workCodeExists: true, taxNumExists: true},
 			uc:   &fakeUserClient{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT count\(\*\) FROM "work_codes"`).
@@ -201,7 +205,7 @@ func TestCreateCompany(t *testing.T) {
 		},
 		{
 			name: "tax number db error",
-			repo: &fakeCompanyRepo{},
+			repo: &fakeCompanyRepo{taxNumExists: true},
 			uc:   &fakeUserClient{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectQuery(`SELECT count\(\*\) FROM "work_codes"`).
