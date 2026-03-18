@@ -122,6 +122,25 @@ func (s *PaymentService) GetFilteredPayments(ctx context.Context, filter reposit
 	return payments, nil
 }
 
+func (s *PaymentService) GetPaymentByID(ctx context.Context, id uint) (*model.Payment, error) {
+	ac := auth.GetAuthFromContext(ctx)
+	if ac == nil || ac.ClientID == nil {
+		return nil, errors.UnauthorizedErr("not authenticated as client")
+	}
+
+	payment, err := s.paymentRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, errors.NotFoundErr("payment not found")
+	}
+
+	payerAccount, err := s.accountRepo.FindByAccountNumber(ctx, payment.Transaction.PayerAccountNumber)
+	if err != nil || payerAccount.ClientID != *ac.ClientID {
+		return nil, errors.NotFoundErr("payment not found")
+	}
+
+	return payment, nil
+}
+
 func (s *PaymentService) VerifyPayment(ctx context.Context, id uint, code string) (*model.Payment, error) {
 	payment, err := s.paymentRepo.GetByID(ctx, id)
 	if err != nil {

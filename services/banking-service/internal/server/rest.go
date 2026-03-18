@@ -113,6 +113,7 @@ func SetupRoutes(
 		payments.Use(auth.Middleware(verifier, permissions))
 		{
 			payments.GET("", paymentHandler.GetPayments)
+			payments.GET("/:id", paymentHandler.GetPaymentByID)
 			payments.POST("", paymentHandler.CreatePayment)
 			payments.POST("/:id/verify", paymentHandler.VerifyPayment)
 		}

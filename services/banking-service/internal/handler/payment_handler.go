@@ -100,6 +100,22 @@ func (h *PaymentHandler) CreatePayment(c *gin.Context) {
 	})
 }
 
+func (h *PaymentHandler) GetPaymentByID(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.Error(errors.BadRequestErr("invalid payment id"))
+		return
+	}
+
+	payment, err := h.service.GetPaymentByID(c.Request.Context(), uint(id))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToPaymentResponse(payment))
+}
+
 func (h *PaymentHandler) VerifyPayment(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
