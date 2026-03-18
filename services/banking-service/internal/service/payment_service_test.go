@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 // ── Fake Repo ────────────────────────────────────────────────────────
@@ -64,12 +63,7 @@ func (f *fakeTransactionRepo) GetByID(_ context.Context, _ uint) (*model.Transac
 	return f.returnedTx, f.returnedTxErr
 }
 
-func (f *fakeTransactionRepo) GetByIDWithTx(_ context.Context, _ *gorm.DB, _ uint) (*model.Transaction, error) {
-	// reuse the same return logic as GetByID
-	return f.returnedTx, f.returnedTxErr
-}
-
-func (f *fakeTransactionRepo) UpdateWithTx(_ context.Context, _ *gorm.DB, _ *model.Transaction) error {
+func (f *fakeTransactionRepo) Update(_ context.Context, _ *model.Transaction) error {
 	return f.updateErr
 }
 

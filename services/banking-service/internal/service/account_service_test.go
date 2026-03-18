@@ -33,11 +33,11 @@ func (r *fakeAccountRepo) AccountNumberExists(_ context.Context, _ string) (bool
 	return r.accNumExists, r.accNumExistsErr
 }
 
-func (r *fakeAccountRepo) GetByAccountNumberWithTx(_ context.Context, _ *gorm.DB, _ string) (*model.Account, error) {
+func (r *fakeAccountRepo) GetByAccountNumber(_ context.Context, _ string) (*model.Account, error) {
 	return r.getByAccNumber, r.getByAccNumberErr
 }
 
-func (r *fakeAccountRepo) UpdateWithTx(_ context.Context, _ *gorm.DB, _ *model.Account) error {
+func (r *fakeAccountRepo) Update(_ context.Context, _ *model.Account) error {
 	return r.updateErr
 }
 
