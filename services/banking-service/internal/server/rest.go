@@ -45,13 +45,7 @@ func NewServer(
 		accountHandler,
 		companyHandler,
 		transferHandler,
-		payeeHandler,
-		exchangeHandler,
-		paymentHandler,
-		cardHandler,
-		loanHandler,
-		verifier,
-		permissions,
+		payeeHandler, exchangeHandler, paymentHandler, cardHandler, loanHandler, verifier, permissions,
 	)
 
 	server := &http.Server{
@@ -105,6 +99,7 @@ func SetupRoutes(
 		{
 			accounts.POST("", accountHandler.Create)
 			accounts.GET("/:accountId/cards", auth.RequireIdentityType(auth.IdentityClient, auth.IdentityEmployee), cardHandler.ListCardsByAccount)
+			accounts.GET("", auth.RequireIdentityType(auth.IdentityClient, auth.IdentityEmployee), accountHandler.ListAccounts)
 			//TODO employee list all accounts here?
 		}
 
@@ -190,6 +185,13 @@ func SetupRoutes(
 			clientLoans.GET("", loanHandler.GetLoans)
 			clientLoans.GET("/:loan_id", loanHandler.GetLoanByID)
 			clientLoans.POST("/request", loanHandler.SubmitLoanRequest)
+		}
+		loanRequests := api.Group("/loan-requests")
+		loanRequests.Use(auth.Middleware(verifier, permissions))
+		{
+			loanRequests.GET("", auth.RequireIdentityType(auth.IdentityEmployee), loanHandler.ListLoanRequests)
+			loanRequests.PATCH("/:id/approve", auth.RequireIdentityType(auth.IdentityEmployee), loanHandler.ApproveLoanRequest)
+			loanRequests.PATCH("/:id/reject", auth.RequireIdentityType(auth.IdentityEmployee), loanHandler.RejectLoanRequest)
 		}
 	}
 }

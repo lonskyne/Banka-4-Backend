@@ -156,6 +156,9 @@ func (s *AccountService) Create(ctx context.Context, req dto.CreateAccountReques
 
 	return account, nil
 }
+func (s *AccountService) GetAllAccounts(ctx context.Context, query *dto.ListAccountsQuery) ([]*model.Account, int64, error) {
+	return s.repo.FindAll(ctx, query)
+}
 
 func (s *AccountService) GetClientAccounts(ctx context.Context, clientID uint) ([]model.Account, error) {
 	accounts, err := s.repo.FindAllByClientID(ctx, clientID)

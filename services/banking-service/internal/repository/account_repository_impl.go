@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"banking-service/internal/dto"
 	"banking-service/internal/model"
 	"common/pkg/db"
 	"context"
@@ -107,6 +108,38 @@ func (r *accountRepository) UpdateBalance(ctx context.Context, account *model.Ac
 		"daily_spending":    account.DailySpending,
 		"monthly_spending":  account.MonthlySpending,
 	}).Error
+}
+func (r *accountRepository) FindAll(ctx context.Context, query *dto.ListAccountsQuery) ([]*model.Account, int64, error) {
+	var accounts []*model.Account
+	var count int64
+
+	db := r.db.WithContext(ctx).Model(&model.Account{})
+
+	if query.ClientID != nil {
+		db = db.Where("client_id = ?", *query.ClientID)
+	}
+	if query.AccountType != "" {
+		db = db.Where("account_type = ?", query.AccountType)
+	}
+	if query.AccountKind != "" {
+		db = db.Where("account_kind = ?", query.AccountKind)
+	}
+	if query.Status != "" {
+		db = db.Where("status = ?", query.Status)
+	}
+	if query.CurrencyID != nil {
+		db = db.Where("currency_id = ?", *query.CurrencyID)
+	}
+
+	if err := db.Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (query.Page - 1) * query.PageSize
+	err := db.Preload("Currency").Preload("Company").
+		Limit(query.PageSize).Offset(offset).Find(&accounts).Error
+
+	return accounts, count, err
 }
 
 func (r *accountRepository) GetByAccountNumber(ctx context.Context, accountNumber string) (*model.Account, error) {
