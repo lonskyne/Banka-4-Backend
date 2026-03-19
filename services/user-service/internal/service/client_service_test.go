@@ -39,19 +39,9 @@ func TestGetMobileVerificationSecret(t *testing.T) {
 			&fakeMailer{},
 		)
 
-		ctx := auth.SetAuthOnContext(context.Background(), &auth.AuthContext{ClientID: uintPtr(2)})
-		secret, err := svc.GetMobileVerificationSecret(ctx)
+		secret, err := svc.GetMobileVerificationSecret(context.Background(), 2)
 		require.NoError(t, err)
 		require.Equal(t, "JBSWY3DPEHPK3PXP", secret)
-	})
-
-	t.Run("forbidden when client auth missing", func(t *testing.T) {
-		svc := newClientService(&fakeClientRepo{}, &fakeIdentityRepo{}, &fakeActivationTokenRepo{}, &fakeMailer{})
-
-		secret, err := svc.GetMobileVerificationSecret(context.Background())
-		require.Error(t, err)
-		require.Empty(t, secret)
-		require.Contains(t, err.Error(), "client access required")
 	})
 
 	t.Run("not found when secret is empty", func(t *testing.T) {
@@ -62,8 +52,7 @@ func TestGetMobileVerificationSecret(t *testing.T) {
 			&fakeMailer{},
 		)
 
-		ctx := auth.SetAuthOnContext(context.Background(), &auth.AuthContext{ClientID: uintPtr(2)})
-		secret, err := svc.GetMobileVerificationSecret(ctx)
+		secret, err := svc.GetMobileVerificationSecret(context.Background(), 2)
 		require.Error(t, err)
 		require.Empty(t, secret)
 		require.Contains(t, err.Error(), "mobile verification secret not found")

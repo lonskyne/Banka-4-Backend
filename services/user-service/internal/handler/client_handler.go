@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"common/pkg/auth"
 	"common/pkg/errors"
 	"user-service/internal/dto"
 	"user-service/internal/service"
@@ -58,7 +59,13 @@ func (h *ClientHandler) Register(c *gin.Context) {
 // @Failure 404 {object} errors.AppError
 // @Router /api/secret-mobile [get]
 func (h *ClientHandler) GetMobileSecret(c *gin.Context) {
-	secret, err := h.service.GetMobileVerificationSecret(c.Request.Context())
+	authCtx := auth.GetAuth(c)
+	if authCtx == nil || authCtx.ClientID == nil {
+		c.Error(errors.ForbiddenErr("client access required"))
+		return
+	}
+
+	secret, err := h.service.GetMobileVerificationSecret(c.Request.Context(), *authCtx.ClientID)
 	if err != nil {
 		c.Error(err)
 		return

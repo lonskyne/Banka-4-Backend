@@ -116,13 +116,8 @@ func (s *ClientService) Register(ctx context.Context, req *dto.CreateClientReque
 	return client, nil
 }
 
-func (s *ClientService) GetMobileVerificationSecret(ctx context.Context) (string, error) {
-	authCtx := auth.GetAuthFromContext(ctx)
-	if authCtx == nil || authCtx.ClientID == nil {
-		return "", errors.ForbiddenErr("client access required")
-	}
-
-	client, err := s.clientRepo.FindByID(ctx, *authCtx.ClientID)
+func (s *ClientService) GetMobileVerificationSecret(ctx context.Context, clientID uint) (string, error) {
+	client, err := s.clientRepo.FindByID(ctx, clientID)
 	if err != nil {
 		return "", errors.InternalErr(err)
 	}
