@@ -71,7 +71,6 @@ func main() {
 			repository.NewGormTransactionManager,
 			repository.NewLoanRepository,
 			repository.NewLoanTypeRepository,
-      repository.NewVerificationTokenRepository,
 			service.NewAccountService,
 			service.NewCompanyService,
 			service.NewPaymentService,

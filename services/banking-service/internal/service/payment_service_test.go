@@ -79,7 +79,10 @@ func (f *fakeTransactionRepo) GetByID(_ context.Context, _ uint) (*model.Transac
 
 type fakePaymentAccountRepo struct {
 	accounts map[string]*model.Account
+	accountArr []model.Account
+	account    *model.Account
 	findErr  error
+	nameExists bool
 }
 
 func newFakePaymentAccountRepo(accounts ...*model.Account) *fakePaymentAccountRepo {
@@ -109,6 +112,27 @@ func (f *fakePaymentAccountRepo) FindByAccountNumber(ctx context.Context, accoun
 	}
 	return acc, nil
 }
+
+func (f *fakePaymentAccountRepo) FindAllByClientID(_ context.Context, _ uint) ([]model.Account, error) {
+	return f.accountArr, nil
+}
+
+func (f *fakePaymentAccountRepo) FindByAccountNumberAndClientID(_ context.Context, _ string, _ uint) (*model.Account, error) {
+	return f.account, nil
+}
+
+func (f *fakePaymentAccountRepo) NameExistsForClient(_ context.Context, _ uint, _ string, _ string) (bool, error) {
+	return f.nameExists, nil
+}
+
+func (f *fakePaymentAccountRepo) UpdateName(_ context.Context, _ string, _ string) error {
+	return nil
+}
+
+func (f *fakePaymentAccountRepo) UpdateLimits(_ context.Context, _ string, _ float64, _ float64) error {
+	return nil
+}
+
 
 func (f *fakePaymentAccountRepo) UpdateBalance(ctx context.Context, account *model.Account) error {
 	f.accounts[account.AccountNumber] = account
@@ -405,7 +429,7 @@ func TestGetAccountPayments(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			svc := newPaymentService(tt.repo, &fakeTransactionRepo{})
+			svc := NewPaymentService(tt.repo, &fakeTransactionRepo{})
 			payments, total, err := svc.GetAccountPayments(context.Background(), "444000112345678911", &dto.PaymentFilters{Page: 1, PageSize: 10})
 			if tt.expectErr {
 				require.Error(t, err)

@@ -83,9 +83,6 @@ func (r *fakeVerificationTokenRepo) DeleteByAccountAndClient(_ context.Context, 
 	return r.deleteErr
 }
 
-func (r *fakeVerificationTokenRepo) MarkUsed(_ context.Context, _ uint) error {
-	return nil
-}
 func (r *fakeAccountRepo) GetByAccountNumber(_ context.Context, _ string) (*model.Account, error) {
 	return r.getByAccNumber, r.getByAccNumberErr
 }
@@ -593,7 +590,6 @@ func TestConfirmLimitsChange(t *testing.T) {
 		NewDailyLimit:   500000,
 		NewMonthlyLimit: 2000000,
 		ExpiresAt:       time.Now().Add(5 * time.Minute),
-		Used:            false,
 	}
 
 	tests := []struct {
@@ -628,7 +624,7 @@ func TestConfirmLimitsChange(t *testing.T) {
 			name: "token already used",
 			repo: &fakeAccountRepo{},
 			vr: &fakeVerificationTokenRepo{token: &model.VerificationToken{
-				Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute), Used: true,
+				Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute),
 			}},
 			code:      "123456",
 			expectErr: true,
@@ -638,7 +634,7 @@ func TestConfirmLimitsChange(t *testing.T) {
 			name: "token expired",
 			repo: &fakeAccountRepo{},
 			vr: &fakeVerificationTokenRepo{token: &model.VerificationToken{
-				Code: "123456", ExpiresAt: time.Now().Add(-1 * time.Minute), Used: false,
+				Code: "123456", ExpiresAt: time.Now().Add(-1 * time.Minute),
 			}},
 			code:      "123456",
 			expectErr: true,

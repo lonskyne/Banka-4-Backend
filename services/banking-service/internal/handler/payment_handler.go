@@ -85,7 +85,7 @@ func (h *PaymentHandler) VerifyPayment(c *gin.Context) {
 func (h *PaymentHandler) GetAccountPayments(c *gin.Context) {
 	valStr := c.Param("clientId")
 
-	idVal, err := strconv.ParseUint(valStr, 10, 64)
+	_, err := strconv.ParseUint(valStr, 10, 64)
 
 	if err != nil {
 		c.Error(errors.BadRequestErr("client id must be a number"))
@@ -93,11 +93,6 @@ func (h *PaymentHandler) GetAccountPayments(c *gin.Context) {
 	}
 
 	accountNumber := c.Param("accountNumber")
-
-	if _, err := h.accountService.GetAccountDetails(c.Request.Context(), accountNumber, uint(idVal)); err != nil {
-		c.Error(err)
-		return
-	}
 
 	var filters dto.PaymentFilters
 	if err := c.ShouldBindQuery(&filters); err != nil {

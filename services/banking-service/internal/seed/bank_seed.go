@@ -391,7 +391,6 @@ var seedVerificationTokens = []model.VerificationToken{
 		NewDailyLimit:   500000.00,
 		NewMonthlyLimit: 2000000.00,
 		ExpiresAt:       time.Now().AddDate(1, 0, 0),
-		Used:            false,
 	},
 	{
 		ClientID:        1,
@@ -400,7 +399,6 @@ var seedVerificationTokens = []model.VerificationToken{
 		NewDailyLimit:   300000.00,
 		NewMonthlyLimit: 1500000.00,
 		ExpiresAt:       time.Now().AddDate(0, 0, -1),
-		Used:            false,
 	},
 	{
 		ClientID:        1,
@@ -409,7 +407,6 @@ var seedVerificationTokens = []model.VerificationToken{
 		NewDailyLimit:   100000.00,
 		NewMonthlyLimit: 500000.00,
 		ExpiresAt:       time.Now().AddDate(1, 0, 0),
-		Used:            true,
 	},
 }
 
@@ -582,7 +579,7 @@ func Run(db *gorm.DB) error {
 				log.Printf("failed to create verification token: %v", err)
 				return err
 			}
-			log.Printf("created verification token: code=%s account=%s used=%v", token.Code, token.AccountNumber, token.Used)
+			log.Printf("created verification token: code=%s account=%s", token.Code, token.AccountNumber)
 		}
 	}
 

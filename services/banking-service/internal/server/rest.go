@@ -92,7 +92,7 @@ func SetupRoutes(
 			//TODO employee list all accounts here?
 		}
 
-		clientAccounts := api.Group("/clients/:id/accounts")
+		clientAccounts := api.Group("/clients/:clientId/accounts")
 		clientAccounts.Use(auth.Middleware(verifier, permissions))
 		{
 			clientAccounts.GET("", accountHandler.GetClientAccounts)
