@@ -7,9 +7,7 @@ import (
 	"banking-service/internal/repository"
 	"common/pkg/errors"
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	mathrand "math/rand"
 	"time"
 )
@@ -199,33 +197,28 @@ func (s *AccountService) UpdateAccountName(ctx context.Context, accountNumber st
 	return nil
 }
 
-func (s *AccountService) RequestLimitsChange(ctx context.Context, accountNumber string, clientID uint, daily float64, monthly float64) (string, error) {
+func (s *AccountService) RequestLimitsChange(ctx context.Context, accountNumber string, clientID uint, daily float64, monthly float64) error {
 	if _, err := s.repo.FindByAccountNumberAndClientID(ctx, accountNumber, clientID); err != nil {
-		return "", errors.NotFoundErr("account not found")
+		return errors.NotFoundErr("account not found")
 	}
 
 	if err := s.verificationRepo.DeleteByAccountAndClient(ctx, accountNumber, clientID); err != nil {
-		return "", errors.InternalErr(err)
-	}
-
-	code, err := generateSixDigitCode()
-	if err != nil {
-		return "", errors.InternalErr(err)
+		return errors.InternalErr(err)
 	}
 
 	token := &model.VerificationToken{
 		ClientID:        clientID,
 		AccountNumber:   accountNumber,
-		Code:            code,
+		Code:            "",
 		NewDailyLimit:   daily,
 		NewMonthlyLimit: monthly,
 		ExpiresAt:       time.Now().Add(5 * time.Minute),
 	}
 	if err := s.verificationRepo.Create(ctx, token); err != nil {
-		return "", errors.InternalErr(err)
+		return errors.InternalErr(err)
 	}
 
-	return code, nil
+	return nil
 }
 
 func (s *AccountService) ConfirmLimitsChange(ctx context.Context, accountNumber string, clientID uint, code, authorizationHeader string) error {
@@ -257,10 +250,4 @@ func (s *AccountService) ConfirmLimitsChange(ctx context.Context, accountNumber 
 	return nil
 }
 
-func generateSixDigitCode() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%06d", n), nil
-}
+// ...existing code...
